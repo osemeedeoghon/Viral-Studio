@@ -80,3 +80,7 @@ Put the stack behind a reverse proxy with TLS (Caddy, Traefik or nginx) on a dom
 - Caption styles live in `backend/app/media/captions.py` (`PRESETS`). Fonts are Anton and Bangers (OFL),
   installed at build time.
 - API docs: `http://localhost:8000/api/docs`.
+
+## Contributors
+
+- Oseme Edeoghon ([@osemeedeoghon](https://github.com/osemeedeoghon))
