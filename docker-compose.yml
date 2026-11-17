@@ -1,0 +1,51 @@
+name: viral
+
+x-app: &app
+  build: ./backend
+  env_file: .env
+  environment:
+    DATA_DIR: /data
+    REDIS_URL: redis://redis:6379/0
+    KOKORO_URL: http://kokoro:8880
+  volumes:
+    - viral-data:/data
+    - ./frontend:/app/frontend:ro
+  depends_on:
+    - redis
+  restart: unless-stopped
+
+services:
+  api:
+    <<: *app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*"
+    ports:
+      - "${PORT:-8000}:8000"
+
+  worker:
+    <<: *app
+    command: rq worker --url redis://redis:6379/0 viral
+    # Scale with: docker compose up -d --scale worker=2
+    # For NVIDIA GPUs (faster Whisper), uncomment and set WHISPER_DEVICE=cuda:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  redis:
+    image: redis:7.4-alpine
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  # Local, free text-to-speech (OpenAI-compatible API). Used when TTS_PROVIDER=kokoro.
+  # Remove this service if you use ElevenLabs instead.
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    restart: unless-stopped
+
+volumes:
+  viral-data:
+  redis-data:
